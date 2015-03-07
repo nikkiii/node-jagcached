@@ -37,7 +37,7 @@ IndexedFileSystem.prototype.detectLayout = function() {
 		}
 	}
 	if (indexCount <= 0) {
-		throw "No index file(s) present";
+		throw new Error("No index file(s) present");
 	}
 
 	this.data = fs.openSync(this.path + '/main_file_cache.dat', 'r');
@@ -45,7 +45,7 @@ IndexedFileSystem.prototype.detectLayout = function() {
 
 IndexedFileSystem.prototype.getFileCount = function(type) {
 	if (!(type in this.indices)) {
-		throw "Out of bounds";
+		throw new Error("Out of bounds");
 	}
 
 	return this.indices[type].size / FileSystemConstants.INDEX_SIZE;
@@ -113,7 +113,8 @@ IndexedFileSystem.prototype.getFile = function(indexId, file, callback) {
 
 			// check expected chunk id is correct
 			if (i != curChunk) {
-				throw ("Chunk id mismatch.");
+				callback(new Error("Chunk id mismatch."));
+				return;
 			}
 
 			// calculate how much we can read
@@ -132,16 +133,18 @@ IndexedFileSystem.prototype.getFile = function(indexId, file, callback) {
 			// header
 			if (size > read) {
 				if (nextType != (indexId + 1)) {
-					throw ("File type mismatch.");
+					callback(new Error("File type mismatch."));
+					return;
 				}
 
 				if (nextFile != file) {
-					throw ("File id mismatch.");
+					callback(new Error("File id mismatch."));
+					return;
 				}
 			}
 		}
 
-		callback(buffer);
+		callback(null, buffer);
 	});
 };
 
@@ -160,7 +163,10 @@ IndexedFileSystem.prototype.getCrcTable = function(callback) {
 	var hash = 1234;
 
 	function getFile(index, crcs, finished) {
-		self.getFile(0, index, function(buffer) {
+		self.getFile(0, index, function(err, buffer) {
+			if (err) {
+				return;
+			}
 			crcs[index] = crc32.signed(buffer);
 			finished();
 		});

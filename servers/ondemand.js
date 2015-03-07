@@ -69,8 +69,8 @@ OnDemandServer.prototype.listen = function(port) {
  * @param priority The request priority.
  */
 OnDemandServer.prototype.handleRequest = function(socket, type, file, priority) {
-	this.fs.getFile(type, file, function(buffer) {
-		if (!buffer) {
+	this.fs.getFile(type, file, function(err, buffer) {
+		if (err) {
 			socket.end();
 			return;
 		}

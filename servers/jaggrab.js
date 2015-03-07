@@ -54,7 +54,7 @@ JaggrabServer.prototype.handleRequest = function(socket, path) {
 };
 
 JaggrabServer.prototype.sendResponse = function(socket, index) {
-	this.fs.getFile(0, index, function(buffer) {
+	this.fs.getFile(0, index, function(err, buffer) {
 		socket.write(buffer);
 	});
 };
